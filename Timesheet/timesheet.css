@@ -1,0 +1,570 @@
+/* 操作按钮已移至顶部工具栏右侧 */
+  /* Use Obsidian vars for theme compatibility */
+  :root {
+    --ts-cell: 28px; /* Larger cells for better touch */
+    --ts-gap: 8px; /* Increased for better spacing and alignment */
+    --ts-radius: var(--radius-m);
+    --ts-border: var(--background-modifier-border);
+    --ts-bg: var(--background-primary-alt);
+    --ts-accent: var(--text-accent);
+    --ts-error: var(--color-red);
+  }
+  
+/* Container */
+.ts-heatmap--Root {
+  padding: var(--size-4-2);
+  border: 1px solid var(--ts-border);
+  border-radius: var(--ts-radius);
+  background: var(--ts-bg);
+  font-size: var(--font-small);
+  max-width: 950px;
+  margin: 0 auto;
+  /* 移除 overflow 相关，滑轨仅限 toolbar */
+  overflow-x: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+  
+  /* Toolbar */
+  .ts-heatmap--Root .ts-toolbar {
+    max-width: 100% !important;
+    width: 100%;
+    margin: 0 !important;
+    box-sizing: border-box;
+    border: 1px solid var(--ts-border);
+    border-radius: var(--ts-radius);
+    background: var(--background-secondary);
+    padding: var(--size-4-2) var(--size-4-3);
+    /* 只包裹内容区滑动 */
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  /* 工具行横向滑轨，仅限主 toolbar，彻底去重 */
+  .ts-toolbar--one {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    white-space: nowrap !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    font-size: 12px;
+    padding: 4px 6px;
+    box-sizing: border-box;
+    border-radius: 7px;
+  }
+  
+  .ts-toolbar__left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .ts-toolbar__right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  
+  .ts-toolbar__right .ts-btn--icon {
+    background: #f7e9f1;
+    border-color: #e1b3c7;
+    color: #4b3e45;
+  }
+  
+  .ts-toolbar__right .ts-btn--icon:hover {
+    background: #edd3df;
+    border-color: #d4a5b8;
+  }
+  
+  .ts-toolbar__right .ts-btn--icon svg {
+    margin: 0;
+    width: 16px;
+    height: 16px;
+    display: block;
+    fill: currentColor;
+  }
+  /* Quick Add: start/finish/duration 同行显示 */
+  /* Quick Add: start/finish/duration 同行显示，三等分对齐 */
+  .qa-row-fields-group {
+    display: flex;
+    gap: var(--ts-gap);
+    width: 100%;
+  }
+  .qa-row-fields-group .qa-field {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-width: 0;
+    margin-bottom: 0;
+    align-items: stretch;
+  }
+  /* Quick Add 输入框紧凑圆角边框风格 */
+  .qa-row-fields-group .qa-input,
+  .qa-field--full .qa-input {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    height: 28px;
+    line-height: 1.2;
+    padding: 4px 6px;
+    margin-left: 4px;
+    border-radius: 7px;
+    border: 1px solid var(--ts-border, #e6d6dc);
+    background: #fff;
+    font-size: 12px;
+    color: var(--text-normal, #6F4A57);
+    transition: border-color 0.2s;
+  }
+  .qa-row-fields-group .qa-input:focus,
+  .qa-field--full .qa-input:focus {
+    outline: none;
+    border-color: var(--ts-accent, #7a3050);
+    background: #fff;
+  }
+  .qa-row-fields-group .qa-input::placeholder,
+  .qa-field--full .qa-input::placeholder {
+    color: #b9b1b6;
+    opacity: 1;
+  }
+  /* 缩小 quick add 输入框和下拉框宽度 */
+  /* 仅限制单独输入框宽度，同行输入框宽度由 flex 控制 */
+  .qa-input[type="date"] {
+    min-width: 100px;
+    max-width: 140px;
+  }
+  .qa-row-fields-group .qa-input[type="text"],
+  .qa-row-fields-group .qa-input[type="number"],
+  .qa-row-fields-group .qa-input,
+  .qa-row-fields-group .qa-input select {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .qa-row-fields-group .qa-input select {
+    width: 100%;
+    border-radius: 7px;
+    border: 1px solid var(--ts-border, #e6d6dc);
+    background: #fff;
+    font-size: 12px;
+    color: var(--text-normal, #6F4A57);
+    height: 28px;
+    line-height: 1.2;
+    padding: 4px 6px;
+    margin-left: 4px;
+    transition: border-color 0.2s;
+    appearance: none;
+  }
+  .qa-row-fields-group .qa-input select:focus {
+    outline: none;
+    border-color: var(--ts-accent, #7a3050);
+    background: #fff;
+  }
+  .ts-toolbar__title {
+    font-weight: 700;
+    color: #5b4651;
+    margin-right: 4px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .ts-btn {
+    padding: 5px 10px;
+    border-radius: 8px;
+    border: 1px solid #e6bfd0;
+    background: #f2e3ea;
+    font-size: 11px;
+    color: #4b3e45;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .ts-btn--icon {
+    padding: 6px 8px;
+    min-width: 32px;
+    justify-content: center;
+  }
+  
+  .ts-btn--icon svg {
+    margin: 0;
+    width: 16px;
+    height: 16px;
+  }
+  .ts-btn--primary {
+    background: #edd3df;
+    border-color: #e1b3c7;
+  }
+  .ts-month {
+    appearance: none;
+    padding: 5px 10px;
+    border-radius: 8px;
+    border: 1px solid #e1b3c7;
+    background: #f7e9f1;
+    color: #4b3e45;
+    font-size: 11px;
+  }
+  .ts-month--compact {
+    min-width: 110px;
+    max-width: 140px;
+  }
+  
+/* Stats */
+.ts-counters {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: var(--ts-gap);
+  margin: var(--size-4-2) 0 var(--size-4-3) 0;
+}
+  .pill-soft {
+    background: #F4E4E9;
+    border: 1px solid #E6C9D1;
+    color: #6F4A57;
+    padding: 1px 6px;
+    border-radius: 999px;
+    font-size: 11px;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .pill-soft b {
+    color: #ff4d8a;
+    font-weight: 600;
+  }
+  
+  /* Progress bar */
+  
+  
+/* Main layout: Two column with calendar and quick add */
+.ts-main-two-col {
+  display: grid !important;
+  grid-template-columns: 1fr 300px !important;
+  gap: var(--size-4-3);
+  margin-top: 0;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+  align-items: start;
+}
+
+/* 确保两列顶部完美对齐 */
+.ts-main-two-col > .ts-card:first-child,
+.ts-main-two-col > .ts-card:last-child {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* 移动端单列布局 */
+@media (max-width: 768px) {
+  .ts-main-two-col {
+    grid-template-columns: 1fr !important;
+    gap: var(--size-4-2);
+  }
+}
+  
+  /* Cards */
+  .ts-card {
+    border: 1px solid var(--ts-border);
+    border-radius: var(--ts-radius);
+    background: var(--background-primary);
+    padding: var(--size-4-3);
+    position: relative;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+.ts-card.qa-sticky {
+  max-width: 100%;
+  margin: 0;
+  position: sticky;
+  top: var(--size-4-2);
+  height: fit-content;
+  background: var(--background-primary);
+  border: 1px solid var(--ts-border);
+  border-radius: var(--ts-radius);
+  padding: var(--size-4-3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+  /* Quick Add form layout */
+  .ts-card.qa-sticky .ts-qa-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--size-4-2);
+  }
+  
+  .ts-card.qa-sticky .ts-qa-form .ts-qa-fields {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--size-4-2);
+  }
+  
+  .ts-card.qa-sticky .ts-qa-form .ts-qa-actions {
+    margin-top: auto;
+    display: flex;
+    flex-direction: row;
+    gap: var(--size-4-2);
+    align-items: center;
+  }
+  
+  .ts-card.qa-sticky .ts-qa-form .ts-qa-actions .qa-tip {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  
+  .ts-card.qa-sticky .ts-qa-form .ts-qa-actions button {
+    flex-shrink: 0;
+  }
+  
+  .ts-loading {
+    text-align: center;
+    opacity: 0.7;
+  }
+  .ts-error {
+    color: var(--ts-error);
+    text-align: center;
+  }
+  
+  /* Calendar elements */
+  .month-chip, .week-chip {
+    padding: 0 8px;
+    border: 1px solid var(--ts-border);
+    border-radius: var(--radius-s);
+    background: var(--background-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-smallest);
+  }
+  .week-labels {
+    display: grid;
+    row-gap: var(--ts-gap);
+    grid-template-rows: repeat(auto-fit, var(--ts-cell));
+    height: 100%;
+  }
+  /* Layout helper grids (replacing inline styles) */
+  .calendar-header-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--ts-gap);
+    align-items: center;
+    margin-bottom: var(--ts-gap);
+  }
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--ts-gap);
+  }
+  .calendar-rows {
+    display: grid;
+    row-gap: var(--ts-gap);
+  }
+  .weekday-row {
+    display: grid;
+    grid-template-columns: repeat(7, var(--ts-cell));
+    gap: var(--ts-gap);
+  }
+  .weekday-cell {
+    text-align: center;
+    font-size: var(--font-smallest);
+    opacity: 0.8;
+  }
+  .row-7 {
+    display: grid;
+    grid-template-columns: repeat(7, var(--ts-cell));
+    gap: var(--ts-gap);
+    min-height: var(--ts-cell);
+    height: var(--ts-cell);
+    align-items: stretch;
+  }
+  .day-sq {
+    border-radius: var(--radius-s);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    font-size: var(--font-smallest);
+    border: 1px solid var(--background-modifier-border);
+  }
+  /* Heat levels (replace inline background colors) */
+  .bg-lvl-0 { background: #FBF7F8; }
+  .bg-lvl-1 { background: #F6EBEF; }
+  .bg-lvl-2 { background: #EFD9E1; }
+  .bg-lvl-3 { background: #C67C95; }
+
+  /* Conflict and outline borders */
+  .day-conflict { border: 2px dashed var(--color-red) !important; }
+  .day-outline  { border: 2px solid var(--color-pink) !important; }
+
+  /* Opacity states */
+  .day-outmonth { opacity: 0.18; }
+  .day-dim { opacity: 0.55; }
+  .day-num {
+    font-weight: bold;
+  }
+  .day-hours {
+    font-size: 8px;
+    opacity: 0.8;
+  }
+  
+  /* Quick Add: Form-like layout */
+  .qa-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ts-gap);
+    align-items: flex-end;
+  }
+  .qa-title {
+    flex-basis: 100%;
+    width: 100%;
+    margin-bottom: 4px;
+  }
+  /* Quick Add 通用字段，允许被 flex 覆盖宽度 */
+  .qa-field {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1 1 0;
+  }
+  .qa-field--full {
+    flex-basis: 100%;
+    width: 100%;
+  }
+  .qa-field--full .qa-input {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+  .ts-toolbar--one > * {
+    min-width: max-content !important;
+  }
+  .qa-actions {
+    display: flex;
+    gap: var(--ts-gap);
+    flex-basis: 100%;
+    justify-content: flex-end;
+  }
+  @media (max-width: 767px) {
+    .qa-row {
+      flex-direction: column;
+      gap: var(--ts-gap);
+    }
+    .qa-field {
+      min-width: 0;
+      flex-basis: auto;
+    }
+  }
+  
+  /* Legend */
+  .ts-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ts-gap);
+    margin-top: var(--size-4-2);
+    font-size: var(--font-smallest);
+  }
+  .legend-item {
+    padding: 2px 8px;
+    border-radius: 999px;
+    color: var(--text-normal);
+  }
+  /* Legend background variants */
+  .legend-0 { background: #FBF7F8; }
+  .legend-1 { background: #F6EBEF; }
+  .legend-2 { background: #EFD9E1; }
+  .legend-3 { background: #C67C95; }
+  .legend-conflict {
+    border: 2px dashed var(--color-red);
+    background: transparent;
+  }
+  
+  /* 缩小 calendar/quickadd 间距 */
+  /* 移除卡片间距，让两列完美对齐 */
+  
+  /* ===== 今日高亮样式 ===== */
+  .day-today {
+    border: 2px solid var(--text-accent, #007acc) !important;
+    background: rgba(0, 122, 204, 0.1) !important;
+    box-shadow: 0 0 8px rgba(0, 122, 204, 0.3);
+    transform: scale(1.02);
+    z-index: 2;
+    position: relative;
+    animation: today-pulse 2s ease-in-out infinite;
+  }
+  
+  /* 今日高亮的脉搏动画效果 */
+  @keyframes today-pulse {
+    0%, 100% {
+      box-shadow: 0 0 8px rgba(0, 122, 204, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 12px rgba(0, 122, 204, 0.5);
+    }
+  }
+  
+  /* 针对不同主题的颜色调整 */
+  .theme-dark .day-today {
+    border-color: #00d4ff !important;
+    background: rgba(0, 212, 255, 0.15) !important;
+    box-shadow: 0 0 8px rgba(0, 212, 255, 0.4);
+  }
+  
+  .theme-dark .day-today {
+    animation: today-pulse-dark 2s ease-in-out infinite;
+  }
+  
+  @keyframes today-pulse-dark {
+    0%, 100% {
+      box-shadow: 0 0 8px rgba(0, 212, 255, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 12px rgba(0, 212, 255, 0.6);
+    }
+  }
+  
+  .theme-light .day-today {
+    border-color: #0066cc !important;
+    background: rgba(0, 102, 204, 0.1) !important;
+    box-shadow: 0 0 8px rgba(0, 102, 204, 0.3);
+  }
+  
+  /* 确保今日高亮在悬停时也能正常显示 */
+  .day-today:hover {
+    transform: scale(1.05) !important;
+    box-shadow: 0 0 15px rgba(0, 122, 204, 0.6) !important;
+    animation-play-state: paused; /* 悬停时暂停脉搏动画 */
+  }
+  
+  .theme-dark .day-today:hover {
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.7) !important;
+  }
+  
+  /* Button icon spacing - 移除JavaScript中的内联样式 */
+  .ts-btn svg {
+    margin-right: 4px;
+  }
+  
+  /* Toolbar layout fixes - 确保与原有样式兼容 */
+  .ts-toolbar__title {
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Emoji/icon sizing helpers (replacing inline fontSize/margins) */
+  .ts-emoji { display: inline-block; line-height: 1; }
+  .ts-emoji--sm { font-size: 15px; }
+  .ts-emoji--md { font-size: 16px; }
+  .ts-emoji--mr { margin-right: 4px; }
