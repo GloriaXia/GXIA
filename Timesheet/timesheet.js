@@ -20,6 +20,13 @@ function App() {
   const defaultStart = s.defaultStart || "07:00";
   const defaultFinish = s.defaultFinish || "17:00";
   const showDayNumbers = Boolean(s.showDayNumbers ?? true);
+  // ===== Review rule settings =====
+  const requireNoOverlap = Boolean(s.requireNoOverlap ?? true);
+  const reviewMinHours = Number(s.reviewMinHours ?? 8);
+  const reviewMaxHours = Number(s.reviewMaxHours ?? 12);
+  const allowedHoursRange = s.allowedHoursRange || "06:00-22:00";
+  const requireAddress = Boolean(s.requireAddress ?? false);
+  const reviewProp = s.reviewProp || "review_status";
 
   // ===== utils ===== (Moved here, before any usage and return)
   function todayYMD() {
@@ -89,6 +96,16 @@ function App() {
     const dt = parseDateTime(str);
     if (!dt) return '';
     return `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`;
+  }
+  function hhmmToMinutes(hhmm){
+    if (!hhmm || !/\d{2}:\d{2}/.test(hhmm)) return null;
+    const [h,m] = hhmm.split(":").map(Number);
+    return h*60+m;
+  }
+  function parseAllowedRange(rangeStr){
+    const m = String(rangeStr||"").match(/^(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})$/);
+    if (!m) return null;
+    return { min: hhmmToMinutes(m[1]), max: hhmmToMinutes(m[2]) };
   }
   function fmtDT(dt) {
     return `${ymdStr(dt)} ${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}:00`;
@@ -218,6 +235,7 @@ function App() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showReview, setShowReview] = useState(false);
 
   // 下拉时间选项（30 分钟步长）
   const timeOpts = useMemo(()=>timeOptions(30), []);
@@ -265,9 +283,34 @@ function App() {
       }
 
       const idx = {};
+      const rangeAllowed = parseAllowedRange(allowedHoursRange);
       Object.keys(tmp).forEach(ymd=>{
         const d = tmp[ymd];
-        idx[ymd] = { hours: round2(d.total), conflicts: hasOverlap(d.entries), paths: d.paths, details: d.details };
+        const rec = { hours: round2(d.total), conflicts: hasOverlap(d.entries), paths: d.paths, details: d.details };
+
+        // Evaluate review violations
+        const issues = [];
+        if (requireNoOverlap && rec.conflicts) issues.push("overlap");
+        if (isFinite(reviewMinHours) && rec.hours < reviewMinHours) issues.push("below-min-hours");
+        if (isFinite(reviewMaxHours) && rec.hours > reviewMaxHours) issues.push("above-max-hours");
+        let missingAddr = false, timeOutOfRange = false, missingStartOrFinish = false;
+        for (const det of rec.details) {
+          if (requireAddress && !String(det.address||"").trim()) missingAddr = true;
+          if (!det.start || !det.finish) missingStartOrFinish = true;
+          if (rangeAllowed) {
+            const stMin = hhmmToMinutes(det.start);
+            const ftMin = hhmmToMinutes(det.finish);
+            if ((stMin!=null && stMin < rangeAllowed.min) || (ftMin!=null && ftMin > rangeAllowed.max)) {
+              timeOutOfRange = true;
+            }
+          }
+        }
+        if (missingAddr) issues.push("missing-address");
+        if (missingStartOrFinish) issues.push("missing-start-or-finish");
+        if (timeOutOfRange) issues.push("time-out-of-range");
+
+        rec.violations = issues;
+        idx[ymd] = rec;
       });
       setByDay(idx);
       setMonthTotal(round2(monTotal));
@@ -453,6 +496,61 @@ function App() {
       notice(`CSV export failed: ${e.message || 'Unknown error'}`);
     }
   };
+  
+  // ===== Review actions =====
+  const openDayFile = async (ymd) => {
+    const path = byDay[ymd]?.paths?.[0];
+    if (path) app.workspace.openLinkText(path, "", false);
+  };
+  const setReviewStatus = async (ymd, status) => {
+    try {
+      const rec = byDay[ymd];
+      if (!rec || !rec.paths || rec.paths.length===0) return notice("No file for "+ymd);
+      for (const p of rec.paths) {
+        await ensureFrontmatter(app, app.vault.getAbstractFileByPath(p), { [reviewProp]: status });
+      }
+      // small delay for metadata cache refresh
+      await new Promise(r=>setTimeout(r, 200));
+      await compute();
+      notice(`Marked ${ymd}: ${status}`);
+    } catch (e) { console.error(e); notice("Set review failed"); }
+  };
+
+  const generateReviewReport = async () => {
+    if (!range.start) return;
+    try {
+      await ensureFolder(app, `${folder}/Reports`);
+      // collect violations only
+      const rows = [];
+      let totalDays = 0;
+      let violatedDays = 0;
+      for (let d=new Date(range.start); d<=range.end; d.setDate(d.getDate()+1)) {
+        const y = ymdStr(d);
+        const rec = byDay[y];
+        if (!rec) continue;
+        totalDays++;
+        const issues = (rec.violations||[]);
+        if (issues.length>0) {
+          violatedDays++;
+          const human = issues.map(k=>({
+            "overlap": "Overlap",
+            "below-min-hours": `Below min (${reviewMinHours}h)` ,
+            "above-max-hours": `Above max (${reviewMaxHours}h)` ,
+            "missing-address": "Missing address",
+            "missing-start-or-finish": "Missing start/finish",
+            "time-out-of-range": `Outside ${allowedHoursRange}`
+          }[k] || k)).join(", ");
+          const link = rec.paths?.[0] ? `[[${rec.paths[0]}|Open]]` : "";
+          rows.push(`| ${y} | ${rec.hours} | ${human} | ${link} |`);
+        }
+      }
+      const tableHead = `| Date | Hours | Issues | File |\n|------|-------|--------|------|`;
+      const md = `---\ntype: timesheet-review\nmode: month\nrange: ${month}\nviolated_days: ${violatedDays}\ntotal_days: ${totalDays}\n---\n\n# Timesheet Review - ${month}\n\n- Violated days: ${violatedDays}/${totalDays}\n- Rules: ${requireNoOverlap?"no-overlap; ":""}min>=${reviewMinHours}h; max<=${reviewMaxHours}h; ${requireAddress?"address-required; ":""}${allowedHoursRange?`hours ${allowedHoursRange}`:""}\n\n## Violations\n${tableHead}\n${rows.join("\n")}\n`;
+      const fname = `Review - ${month}.md`;
+      await writeToVault(app, `${folder}/Reports/${fname}`, md);
+      app.workspace.openLinkText(`${folder}/Reports/${fname}`, "", false);
+    } catch (e) { console.error(e); notice(`Review report failed: ${e.message||"Unknown error"}`); }
+  };
   const generateReport = async () => {
     if (!range.start) return;
     try {
@@ -525,6 +623,9 @@ ${table}
           </button>
           <button className="ts-btn ts-btn--icon ts-btn--primary" title="Generate Report" onClick={generateReport}>
             <span className="ts-emoji ts-emoji--md">📄</span>
+          </button>
+          <button className="ts-btn ts-btn--icon" title="Toggle Review Panel" onClick={()=>setShowReview(v=>!v)}>
+            <span className="ts-emoji ts-emoji--md">🧪</span>
           </button>
         </div>
       </div>
@@ -600,6 +701,49 @@ ${table}
             </>
           )}
         </div>
+
+        {/* Review Panel */}
+        {showReview && (
+          <div className="ts-card ts-review">
+            <div className="ts-review__header">
+              <div className="ts-review__title"><span className="ts-emoji ts-emoji--md ts-emoji--mr">🧪</span> Review</div>
+              <div className="ts-review__actions">
+                <button className="ts-btn" onClick={generateReviewReport}><span className="ts-emoji ts-emoji--sm ts-emoji--mr">📝</span> Review Report</button>
+              </div>
+            </div>
+            <div className="ts-review__body">
+              {Object.keys(byDay).filter(ymd=> (byDay[ymd]?.violations||[]).length>0).sort().map(ymd=>{
+                const rec = byDay[ymd];
+                const issues = rec.violations||[];
+                const labelMap = {
+                  "overlap": "Overlap",
+                  "below-min-hours": `Below min (${reviewMinHours}h)`,
+                  "above-max-hours": `Above max (${reviewMaxHours}h)`,
+                  "missing-address": "Missing address",
+                  "missing-start-or-finish": "Missing start/finish",
+                  "time-out-of-range": `Outside ${allowedHoursRange}`
+                };
+                return (
+                  <div key={ymd} className="ts-review__row">
+                    <div className="ts-review__date">{ymd}</div>
+                    <div className="ts-review__hours">{rec.hours}h</div>
+                    <div className="ts-review__issues">
+                      {issues.map((k,i)=> <span key={i} className="ts-tag ts-tag--warn">{labelMap[k] || k}</span>)}
+                    </div>
+                    <div className="ts-review__ops">
+                      <button className="ts-btn" onClick={()=>openDayFile(ymd)}><span className="ts-emoji ts-emoji--sm ts-emoji--mr">🔗</span>Open</button>
+                      <button className="ts-btn" onClick={()=>setReviewStatus(ymd, 'approved')}><span className="ts-emoji ts-emoji--sm ts-emoji--mr">✅</span>Approve</button>
+                      <button className="ts-btn" onClick={()=>setReviewStatus(ymd, 'rejected')}><span className="ts-emoji ts-emoji--sm ts-emoji--mr">⛔</span>Reject</button>
+                    </div>
+                  </div>
+                );
+              })}
+              {Object.keys(byDay).every(ymd => (byDay[ymd]?.violations||[]).length===0) && (
+                <div className="ts-review__empty">No issues found for this month.</div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Quick Add */}
         <div className="ts-card qa-sticky">

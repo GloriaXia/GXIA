@@ -99,6 +99,50 @@ function App() {
         onChange={(v)=>set("showDayNumbers", v)}
       />
 
+      <SettingDivider />
+
+      <SettingTitle>Review Rules</SettingTitle>
+
+      <SettingSwitch
+        label="Require no overlap"
+        value={Boolean(s.requireNoOverlap ?? true)}
+        onChange={(v)=>set("requireNoOverlap", v)}
+      />
+
+      <SettingInput
+        label="Min daily hours (approval)"
+        type="number" step="0.5"
+        value={s.reviewMinHours ?? 8}
+        onChange={(e)=>set("reviewMinHours", Number(e.target.value))}
+      />
+
+      <SettingInput
+        label="Max daily hours (approval)"
+        type="number" step="0.5"
+        value={s.reviewMaxHours ?? 12}
+        onChange={(e)=>set("reviewMaxHours", Number(e.target.value))}
+      />
+
+      <SettingInput
+        label="Allowed work hours (HH:MM-HH:MM)"
+        type="text"
+        value={s.allowedHoursRange ?? "06:00-22:00"}
+        onChange={(e)=>set("allowedHoursRange", e.target.value)}
+      />
+
+      <SettingSwitch
+        label="Require address"
+        value={Boolean(s.requireAddress ?? false)}
+        onChange={(v)=>set("requireAddress", v)}
+      />
+
+      <SettingInput
+        label="Review status property"
+        type="text"
+        value={s.reviewProp ?? "review_status"}
+        onChange={(e)=>set("reviewProp", e.target.value)}
+      />
+
       <SettingDescription>
         Configure to match your vault. Use autocomplete for paths/properties.
       </SettingDescription>

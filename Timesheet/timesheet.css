@@ -563,6 +563,58 @@
     gap: 6px;
   }
 
+  /* ===== Review Panel ===== */
+  .ts-review {
+    display: flex;
+    flex-direction: column;
+    gap: var(--size-4-2);
+  }
+  .ts-review__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--size-4-2);
+    margin-bottom: 4px;
+  }
+  .ts-review__title {
+    font-weight: 600;
+  }
+  .ts-review__body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .ts-review__row {
+    display: grid;
+    grid-template-columns: 110px 70px 1fr auto;
+    gap: var(--ts-gap);
+    align-items: center;
+    padding: 6px 8px;
+    border: 1px solid var(--ts-border);
+    border-radius: var(--radius-s);
+    background: var(--background-secondary);
+  }
+  .ts-review__date { font-weight: 600; }
+  .ts-review__hours { color: var(--text-muted); }
+  .ts-review__issues {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .ts-review__ops {
+    display: flex;
+    gap: 6px;
+  }
+  .ts-review__empty { opacity: 0.7; text-align: center; padding: 8px; }
+  .ts-tag {
+    padding: 2px 6px;
+    border-radius: 999px;
+    font-size: 11px;
+    border: 1px solid var(--ts-border);
+    background: var(--background-primary);
+  }
+  .ts-tag--warn { border-color: #e6bfd0; background: #f7e9f1; color: #6F4A57; }
+
   /* Emoji/icon sizing helpers (replacing inline fontSize/margins) */
   .ts-emoji { display: inline-block; line-height: 1; }
   .ts-emoji--sm { font-size: 15px; }
