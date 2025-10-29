@@ -1,0 +1,199 @@
+# Timesheet Widget Optimization Rules for Cursor
+
+## Project Context
+This project contains an Obsidian custom component (timesheet widget) that needs to be optimized according to the custom component specification.
+
+## Core Component Rules (MUST FOLLOW)
+
+### 1. Component Structure
+- **MUST**: Custom components consist of 3 parts: View source (timesheet.js), Settings source (timesheetsettings.js), and CSS (timesheet.css)
+- **MUST**: Both view and settings source use JSX syntax with JavaScript only (NO TypeScript)
+- **MUST**: Both files must contain a function named `App`
+- **NEVER**: Use import statements (use globally available APIs directly)
+
+### 2. CSS Naming Convention (HIGH PRIORITY)
+- **MUST**: Use `timesheet--` prefix for all CSS classes (NOT `ts-`)
+- **Format**: `timesheet--ComponentName` (e.g., `timesheet--Root`, `timesheet--Toolbar`, `timesheet--Button`)
+- **MUST**: Use Obsidian CSS variables instead of hardcoded colors
+- **Priority**: `var(--background-primary)`, `var(--text-accent)`, etc.
+- **MUST**: Increase CSS specificity for custom styled buttons/selects using cascading (e.g., `button.timesheet--ConfirmButton {}`)
+
+### 3. Date/Time Handling (HIGH PRIORITY)
+- **MUST**: Use `moment` library for ALL date/time operations
+- **NEVER**: Manually manipulate dates with Date() constructor
+- **Examples**:
+  ```javascript
+  // ✅ GOOD
+  moment().format('YYYY-MM-DD')
+  moment(date).add(1, 'month')
+
+  // ❌ BAD
+  new Date().getFullYear() + '-' + ...
+  ```
+
+### 4. React Performance Optimization (HIGH PRIORITY)
+- **MUST**: Wrap callback functions with `useCallback`
+- **MUST**: Wrap computed values with `useMemo`
+- **MUST**: Carefully check dependency arrays in useEffect and useCallback
+- **NEVER**: Create infinite loops in useEffect
+
+### 5. Data Storage
+- **MUST**: Use `useDataStorage()` for component-level data persistence
+- **Pattern**:
+  ```javascript
+  const { getData, saveData } = useDataStorage();
+  const data = getData() || {};
+  ```
+
+### 6. Obsidian Integration
+- **MUST**: Use `useObsidianApp()` to access app instance
+- **MUST**: Use `Obsidian.Notice` for user notifications (not console.log)
+- **MUST**: Use provided components for settings: `SettingInput`, `SettingSwitch`, `SettingSelect`, etc.
+
+## Timesheet-Specific Optimization Rules
+
+### 7. CSS Refactoring Checklist
+When refactoring CSS:
+- [ ] Replace all `ts-` prefixes with `timesheet--`
+- [ ] Replace hardcoded colors (#FBF7F8, #F6EBEF, etc.) with CSS variables
+- [ ] Use `color-mix()` for heat level gradients
+- [ ] Ensure consistent design across light/dark themes
+
+### 8. Date Utils Refactoring
+Replace manual date functions with moment:
+```javascript
+// ❌ REMOVE
+function todayYMD() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-...`;
+}
+
+// ✅ REPLACE WITH
+function todayYMD() {
+  return moment().format('YYYY-MM-DD');
+}
+```
+
+### 9. Performance Optimization Targets
+Wrap these functions with useCallback:
+- `onCellClick`
+- `saveQuickAdd`
+- `deleteDayEntry`
+- `exportCSV`
+- `generateReport`
+- `compute`
+
+### 10. State Management Optimization
+Consider consolidating related states:
+```javascript
+// ❌ TOO MANY STATES
+const [month, setMonth] = useState(...);
+const [range, setRange] = useState(...);
+const [byDay, setByDay] = useState(...);
+// ... 10+ more states
+
+// ✅ BETTER - GROUP RELATED STATES
+const [calendarState, setCalendarState] = useState({
+  month, range, byDay, weekTimes, monthTimes, monthTotal
+});
+const [quickAddForm, setQuickAddForm] = useState({
+  date, start, finish, duration, address
+});
+const [uiState, setUIState] = useState({
+  saving, loading, error
+});
+```
+
+### 11. Error Handling
+Improve error messages:
+```javascript
+// ❌ BAD
+catch(e) { console.error(e); notice("Save failed."); }
+
+// ✅ GOOD
+catch(e) {
+  console.error('[Timesheet] Save error:', e);
+  new Obsidian.Notice(`Save failed: ${e.message || 'Unknown error'}`, 5000);
+}
+```
+
+### 12. Code Organization
+- Extract utility functions outside App component
+- Group related functions into utility objects (e.g., DateUtils, FileUtils)
+- Keep App component focused on UI logic
+
+## Development Best Practices
+
+### 13. Component Design Principles
+- Follow Occam's Razor: "If unnecessary, do not add complexity"
+- Clean up resources to avoid OOM
+- Use proper loading states and error boundaries
+- Provide empty states for better UX
+
+### 14. Settings Component
+- Use autocomplete components for file/folder/property selection
+- Provide descriptions for each setting
+- Use SettingDivider to separate sections
+- Always show current values
+
+### 15. Validation Checklist Before Commit
+- [ ] No import statements used
+- [ ] All CSS classes use `timesheet--` prefix
+- [ ] All date operations use moment
+- [ ] Callbacks wrapped with useCallback
+- [ ] Computed values wrapped with useMemo
+- [ ] No hardcoded colors (use CSS variables)
+- [ ] Error messages are user-friendly
+- [ ] App function exists in both view and settings
+
+## Priority Order for Refactoring
+
+1. **HIGH PRIORITY** (Do First)
+   - Rename CSS classes to use `timesheet--` prefix
+   - Replace manual date handling with moment
+   - Add useCallback to major functions
+
+2. **MEDIUM PRIORITY** (Do Second)
+   - Replace hardcoded colors with CSS variables
+   - Extract utility functions
+   - Optimize state management
+
+3. **LOW PRIORITY** (Nice to Have)
+   - Add empty states
+   - Improve loading indicators
+   - Add more user feedback
+
+## Common Mistakes to Avoid
+
+1. ❌ Using TypeScript syntax (interfaces, types, etc.)
+2. ❌ Using import/export statements
+3. ❌ Forgetting CSS class prefixes
+4. ❌ Creating infinite loops in useEffect
+5. ❌ Not wrapping callbacks causing re-renders
+6. ❌ Hardcoding colors instead of using CSS variables
+7. ❌ Manual date string manipulation
+8. ❌ Using alert() instead of Obsidian.Notice
+9. ❌ Forgetting to check null/undefined for cached data
+10. ❌ Not handling async errors properly
+
+## Code Review Questions
+
+Before marking code complete, ask:
+1. Does this follow the component specification?
+2. Are all callbacks properly memoized?
+3. Is moment used for all date operations?
+4. Do CSS classes use the correct prefix?
+5. Are errors handled with user-friendly messages?
+6. Is the code maintainable and well-organized?
+
+## References
+- Custom Component Spec: `/home/user/GXIA/自定义组件规范-prompt.md`
+- Timesheet View: `/home/user/GXIA/Timesheet/timesheet.js`
+- Timesheet CSS: `/home/user/GXIA/Timesheet/timesheet.css`
+- Timesheet Settings: `/home/user/GXIA/Timesheet/timesheetsettings.js`
+
+## When in Doubt
+- Prioritize following CoreRules over performance
+- Ask for clarification if requirements conflict
+- Use Obsidian's built-in APIs and components
+- Keep it simple and maintainable
