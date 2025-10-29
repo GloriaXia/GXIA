@@ -1,0 +1,11 @@
+/* Add your styles here */
+.sample--RootContainer {
+  padding: 20px;
+  background-color: var(--background-primary-alt);
+  border-radius: var(--radius-m);
+}
+
+.sample--ButtonContainer {
+  display: flex;
+  gap: 10px;
+}
